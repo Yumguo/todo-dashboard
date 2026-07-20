@@ -101,7 +101,7 @@
     <div class="stat-card"><div class="stat-number" id="statWeekDeadline">0</div><div class="stat-label">本周截止</div></div>
   </div>
   <div class="filters">
-    <input type="text" class="search-box" id="searchInput" placeholder="🔍 搜索待办内容、责任人...">
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 搜索待办内容...">
     <div class="filter-group" id="statusFilter">
       <button class="filter-btn active" data-value="全部">全部</button>
       <button class="filter-btn" data-value="待开始">待开始</button>
@@ -119,7 +119,7 @@
   <div class="table-wrapper">
     <div class="table-scroll">
       <table>
-        <thead><tr><th style="width:40px">#</th><th>待办项</th><th>截止时间</th><th>责任人</th><th>优先级</th><th>状态</th></tr></thead>
+        <thead><tr><th style="width:40px">#</th><th>待办项</th><th>截止时间</th><th>优先级</th><th>状态</th></tr></thead>
         <tbody id="todoBody"></tbody>
       </table>
     </div>
@@ -131,7 +131,7 @@
 const todoData = {
   "week": "2026年7月",
   "dateRange": "07月20日",
-  "updatedTime": "2026-07-20 17:03",
+  "updatedTime": "2026-07-20 17:36",
   "weekStart": "2026-07-20",
   "weekEnd": "2026-07-20",
   "items": [
@@ -244,7 +244,7 @@ function isUrgent(dl){if(!dl)return false;const t=new Date();t.setHours(0,0,0,0)
 function isWithinWeek(dl){if(!dl)return false;return dl>=todoData.weekStart&&dl<=todoData.weekEnd;}
 function formatDate(d){if(!d)return '<span style="color:var(--text-secondary)">—</span>';const p=d.split('-');return parseInt(p[1])+'月'+parseInt(p[2])+'日';}
 function updateStats(){const items=todoData.items;document.getElementById('statTotal').textContent=items.length;document.getElementById('statDone').textContent=items.filter(i=>i.status==='已完成').length;document.getElementById('statPending').textContent=items.length-items.filter(i=>i.status==='已完成').length;document.getElementById('statWeekDeadline').textContent=items.filter(i=>isWithinWeek(i.deadline)).length;}
-function render(){let f=todoData.items.filter(i=>{if(currentStatus!=='全部'&&i.status!==currentStatus)return false;if(currentPriority!=='全部'&&i.priority!==currentPriority)return false;if(searchQuery){const q=searchQuery.toLowerCase();if(!(i.title+' '+i.detail+' '+i.owner+' '+i.note).toLowerCase().includes(q))return false;}return true;});const tb=document.getElementById('todoBody'),es=document.getElementById('emptyState');if(!f.length){tb.innerHTML='';es.style.display='block';return;}es.style.display='none';tb.innerHTML=f.map(i=>{const u=isUrgent(i.deadline);const rc=u?' class="row-urgent"':'';const dc=u?' deadline-urgent':'';const lg=i.note==='遗留'?'<span class="tag-legacy">遗留</span>':'';const dt=i.detail?'<div class="detail-text">'+i.detail+'</div>':'';return '<tr'+rc+'><td style="color:var(--text-secondary);font-weight:600">'+i.id+'</td><td><strong>'+i.title+'</strong>'+lg+dt+'</td><td class="'+dc.trim()+'">'+formatDate(i.deadline)+'</td><td><span class="owner-tag">'+i.owner+'</span></td><td><span class="priority-dot '+priorityMap[i.priority]+'"></span>'+priorityEmoji[i.priority]+' '+i.priority+'</td><td><span class="status-badge status-'+i.status+'">'+i.status+'</span></td></tr>';}).join('');}
+function render(){let f=todoData.items.filter(i=>{if(currentStatus!=='全部'&&i.status!==currentStatus)return false;if(currentPriority!=='全部'&&i.priority!==currentPriority)return false;if(searchQuery){const q=searchQuery.toLowerCase();if(!(i.title+' '+i.detail+' '+i.owner+' '+i.note).toLowerCase().includes(q))return false;}return true;});const tb=document.getElementById('todoBody'),es=document.getElementById('emptyState');if(!f.length){tb.innerHTML='';es.style.display='block';return;}es.style.display='none';tb.innerHTML=f.map(i=>{const u=isUrgent(i.deadline);const rc=u?' class="row-urgent"':'';const dc=u?' deadline-urgent':'';const lg=i.note==='遗留'?'<span class="tag-legacy">遗留</span>':'';const dt=i.detail?'<div class="detail-text">'+i.detail+'</div>':'';return '<tr'+rc+'><td style="color:var(--text-secondary);font-weight:600">'+i.id+'</td><td><strong>'+i.title+'</strong>'+lg+dt+'</td><td class="'+dc.trim()+'">'+formatDate(i.deadline)+'</td><td><span class="priority-dot '+priorityMap[i.priority]+'"></span>'+priorityEmoji[i.priority]+' '+i.priority+'</td><td><span class="status-badge status-'+i.status+'">'+i.status+'</span></td></tr>';}).join('');}
 document.getElementById('statusFilter').addEventListener('click',e=>{if(!e.target.classList.contains('filter-btn'))return;document.querySelectorAll('#statusFilter .filter-btn').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');currentStatus=e.target.dataset.value;render();});
 document.getElementById('priorityFilter').addEventListener('click',e=>{if(!e.target.classList.contains('filter-btn'))return;document.querySelectorAll('#priorityFilter .filter-btn').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');currentPriority=e.target.dataset.value;render();});
 document.getElementById('searchInput').addEventListener('input',e=>{searchQuery=e.target.value.trim();render();});
