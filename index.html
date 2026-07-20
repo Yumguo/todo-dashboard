@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>周待办看板 - 2026年7月 W4</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card-bg: #ffffff;
+    --text: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --border: #e8ecf1;
+    --accent: #3498db;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --high: #e74c3c;
+    --mid: #f39c12;
+    --low: #27ae60;
+    --status-pending: #95a5a6;
+    --status-progress: #3498db;
+    --status-done: #27ae60;
+    --status-overdue: #e74c3c;
+    --stat-bg-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --stat-bg-2: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+    --stat-bg-3: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    --stat-bg-4: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    --table-header-bg: #f8f9fb;
+    --table-row-hover: #f1f5f9;
+    --search-bg: #ffffff;
+    --tag-legacy-bg: #fff3e0;
+    --tag-legacy-text: #e65100;
+    --urgent-bg: #ffebee;
+    --urgent-text: #c62828;
+  }
+  [data-theme="dark"] {
+    --bg: #1a1a2e;
+    --card-bg: #16213e;
+    --text: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --border: #2a2a4a;
+    --shadow: 0 2px 12px rgba(0,0,0,0.3);
+    --table-header-bg: #1e2a4a;
+    --table-row-hover: #1e2a4a;
+    --search-bg: #16213e;
+    --tag-legacy-bg: #3e2723;
+    --tag-legacy-text: #ffab91;
+    --urgent-bg: #3e1515;
+    --urgent-text: #ef9a9a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header-left h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-left .week-info {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .theme-toggle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+  }
+  .theme-toggle:hover { transform: scale(1.1); }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    border-radius: 14px;
+    padding: 18px 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+  }
+  .stat-card:nth-child(1) { background: var(--stat-bg-1); }
+  .stat-card:nth-child(2) { background: var(--stat-bg-2); }
+  .stat-card:nth-child(3) { background: var(--stat-bg-3); }
+  .stat-card:nth-child(4) { background: var(--stat-bg-4); }
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-top: 4px;
+  }
+
+  /* Filters */
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--search-bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border 0.3s;
+  }
+  .search-box:focus { border-color: var(--accent); }
+  .filter-group {
+    display: flex;
+    gap: 4px;
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .filter-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(52,152,219,0.3);
+  }
+  .filter-btn:hover:not(.active) {
+    background: var(--table-row-hover);
+  }
+
+  /* Table */
+  .table-wrapper {
+    background: var(--card-bg);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .table-scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  thead th {
+    background: var(--table-header-bg);
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+  }
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: var(--table-row-hover); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.row-urgent { background: var(--urgent-bg); }
+  tbody tr.row-urgent:hover { background: var(--urgent-bg); }
+
+  /* Priority dot */
+  .priority-dot {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .priority-high { background: var(--high); }
+  .priority-mid { background: var(--mid); }
+  .priority-low { background: var(--low); }
+
+  /* Status badge */
+  .status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .status-待开始 { background: #ecf0f1; color: #7f8c8d; }
+  .status-进行中 { background: #ebf5fb; color: #2980b9; }
+  .status-已完成 { background: #eafaf1; color: #27ae60; }
+  .status-延误 { background: #fdedec; color: #e74c3c; }
+  [data-theme="dark"] .status-待开始 { background: #2c2c3e; color: #a0a0b0; }
+  [data-theme="dark"] .status-进行中 { background: #1a2a4a; color: #5dade2; }
+  [data-theme="dark"] .status-已完成 { background: #1a3a2a; color: #58d68d; }
+  [data-theme="dark"] .status-延误 { background: #3a1a1a; color: #ec7063; }
+
+  /* Tags */
+  .tag-legacy {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--tag-legacy-bg);
+    color: var(--tag-legacy-text);
+    margin-left: 6px;
+  }
+  .deadline-urgent {
+    color: var(--high) !important;
+    font-weight: 700;
+  }
+
+  /* Owner */
+  .owner-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    background: #eef2ff;
+    color: #4338ca;
+    white-space: nowrap;
+  }
+  [data-theme="dark"] .owner-tag { background: #2a2a4a; color: #a5b4fc; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+
+  /* Detail text */
+  .detail-text {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .header h1 { font-size: 1.3rem; }
+    .filters { flex-direction: column; }
+    .search-box { width: 100%; }
+    .filter-group { width: 100%; overflow-x: auto; }
+    table { font-size: 0.82rem; }
+    thead th, tbody td { padding: 10px 10px; }
+  }
+  @media (max-width: 480px) {
+    .container { padding: 12px 10px 30px; }
+    .stat-card { padding: 14px 12px; }
+    .stat-number { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <h1>📋 周待办看板</h1>
+      <div class="week-info" id="weekInfo"></div>
+    </div>
+    <div class="header-right">
+      <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-number" id="statTotal">0</div>
+      <div class="stat-label">总待办</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statDone">0</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statPending">0</div>
+      <div class="stat-label">待开始 / 进行中</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statWeekDeadline">0</div>
+      <div class="stat-label">本周截止</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <input type="text" class="search-box" id="searchInput" placeholder="🔍 搜索待办内容、责任人...">
+    <div class="filter-group" id="statusFilter">
+      <button class="filter-btn active" data-value="全部">全部</button>
+      <button class="filter-btn" data-value="待开始">待开始</button>
+      <button class="filter-btn" data-value="进行中">进行中</button>
+      <button class="filter-btn" data-value="已完成">已完成</button>
+      <button class="filter-btn" data-value="延误">延误</button>
+    </div>
+    <div class="filter-group" id="priorityFilter">
+      <button class="filter-btn active" data-value="全部">全部</button>
+      <button class="filter-btn" data-value="高">🔴 高</button>
+      <button class="filter-btn" data-value="中">🟡 中</button>
+      <button class="filter-btn" data-value="低">🟢 低</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>待办项</th>
+            <th>截止时间</th>
+            <th>责任人</th>
+            <th>优先级</th>
+            <th>状态</th>
+          </tr>
+        </thead>
+        <tbody id="todoBody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="icon">🎉</div>
+      <div>没有匹配的待办事项</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer" id="footer"></div>
+</div>
+
+<script>
+const todoData = {
+  week: "2026年第29周 (W4)",
+  dateRange: "7月20日 - 7月24日",
+  updatedTime: new Date().toLocaleString('zh-CN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(/\//g, '-'),
+  weekStart: "2026-07-20",
+  weekEnd: "2026-07-24",
+  items: [
+    { id: 1, title: "活动工厂0724版本功能提测", detail: "", note: "", deadline: "2026-07-21", owner: "鲍显耀", priority: "中", status: "待开始" },
+    { id: 2, title: "活动工厂0724版本性能提测", detail: "", note: "", deadline: "2026-07-21", owner: "鲍显耀", priority: "中", status: "待开始" },
+    { id: 3, title: "活动工厂-交管切换（0724版本）", detail: "", note: "", deadline: "", owner: "鲍显耀", priority: "高", status: "待开始" },
+    { id: 4, title: "代收付红冲问题处理", detail: "", note: "遗留", deadline: "2026-07-24", owner: "郭名瑜", priority: "高", status: "待开始" },
+    { id: 5, title: "三次沟通材料跟进", detail: "1.材料跟进 2.沟通时间", note: "", deadline: "2026-07-22", owner: "郭名瑜", priority: "高", status: "待开始" },
+    { id: 6, title: "确认洞察平台具体业务负责人", detail: "", note: "", deadline: "2026-07-25", owner: "郭名瑜", priority: "中", status: "待开始" },
+    { id: 7, title: "确认洞察平台产品库太保评估进展", detail: "", note: "", deadline: "2026-07-25", owner: "郭名瑜", priority: "中", status: "待开始" },
+    { id: 8, title: "确认洞察平台太保内勤项目进度", detail: "", note: "", deadline: "2026-07-25", owner: "郭名瑜", priority: "中", status: "待开始" }
+  ]
+};
+
+// --- State ---
+let currentStatus = '全部';
+let currentPriority = '全部';
+let searchQuery = '';
+
+// --- Helpers ---
+const priorityMap = { '高': 'priority-high', '中': 'priority-mid', '低': 'priority-low' };
+const priorityEmoji = { '高': '🔴', '中': '🟡', '低': '🟢' };
+
+function isUrgent(deadline) {
+  if (!deadline) return false;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const dl = new Date(deadline + 'T00:00:00');
+  const diff = (dl - today) / (1000*60*60*24);
+  return diff >= 0 && diff <= 2;
+}
+
+function isWithinWeek(deadline) {
+  if (!deadline) return false;
+  return deadline >= todoData.weekStart && deadline <= todoData.weekEnd;
+}
+
+function formatDate(d) {
+  if (!d) return '<span style="color:var(--text-secondary)">—</span>';
+  const parts = d.split('-');
+  return parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+}
+
+// --- Stats ---
+function updateStats() {
+  const items = todoData.items;
+  const total = items.length;
+  const done = items.filter(i => i.status === '已完成').length;
+  const pending = total - done;
+  const weekDl = items.filter(i => isWithinWeek(i.deadline)).length;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statWeekDeadline').textContent = weekDl;
+}
+
+// --- Render ---
+function render() {
+  let filtered = todoData.items.filter(item => {
+    if (currentStatus !== '全部' && item.status !== currentStatus) return false;
+    if (currentPriority !== '全部' && item.priority !== currentPriority) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const haystack = (item.title + ' ' + item.detail + ' ' + item.owner + ' ' + item.note).toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('todoBody');
+  const emptyState = document.getElementById('emptyState');
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = filtered.map((item, idx) => {
+    const urgent = isUrgent(item.deadline);
+    const rowClass = urgent ? ' class="row-urgent"' : '';
+    const dlClass = urgent ? ' deadline-urgent' : '';
+    const legacyTag = item.note === '遗留' ? '<span class="tag-legacy">遗留</span>' : '';
+    const detailHtml = item.detail ? '<div class="detail-text">' + item.detail + '</div>' : '';
+
+    return '<tr' + rowClass + '>' +
+      '<td style="color:var(--text-secondary);font-weight:600">' + item.id + '</td>' +
+      '<td><strong>' + item.title + '</strong>' + legacyTag + detailHtml + '</td>' +
+      '<td class="' + dlClass.trim() + '">' + formatDate(item.deadline) + '</td>' +
+      '<td><span class="owner-tag">' + item.owner + '</span></td>' +
+      '<td><span class="priority-dot ' + priorityMap[item.priority] + '"></span>' + priorityEmoji[item.priority] + ' ' + item.priority + '</td>' +
+      '<td><span class="status-badge status-' + item.status + '">' + item.status + '</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+// --- Events ---
+document.getElementById('statusFilter').addEventListener('click', e => {
+  if (!e.target.classList.contains('filter-btn')) return;
+  document.querySelectorAll('#statusFilter .filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentStatus = e.target.dataset.value;
+  render();
+});
+document.getElementById('priorityFilter').addEventListener('click', e => {
+  if (!e.target.classList.contains('filter-btn')) return;
+  document.querySelectorAll('#priorityFilter .filter-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentPriority = e.target.dataset.value;
+  render();
+});
+document.getElementById('searchInput').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  render();
+});
+
+// --- Theme ---
+const themeToggle = document.getElementById('themeToggle');
+function setTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  themeToggle.textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+}
+themeToggle.addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  setTheme(!isDark);
+});
+if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+  setTheme(true);
+}
+
+// --- Init ---
+document.getElementById('weekInfo').textContent = todoData.week + ' · ' + todoData.dateRange;
+document.getElementById('footer').textContent = '最后更新：' + todoData.updatedTime;
+updateStats();
+render();
+</script>
+</body>
+</html>
